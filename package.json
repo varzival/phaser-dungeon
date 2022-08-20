@@ -11,7 +11,8 @@
   "dependencies": {
     "core-js": "^3.23.3",
     "phaser": "^3.55.2",
-    "vue": "^3.2.37"
+    "vue": "^3.2.37",
+    "whatwg-fetch": "^3.6.2"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^5.0.6",

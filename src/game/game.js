@@ -12,7 +12,8 @@ function launch(containerId) {
       default: "arcade",
       arcade: {
         gravity: { y: 0 },
-        debug: false
+        // turn on to show colliders and velocity
+        debug: true
       }
     },
     scene: [BootScene, PlayScene],

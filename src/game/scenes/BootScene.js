@@ -19,6 +19,14 @@ export default class BootScene extends Scene {
       "dungeon",
       "tiles/dungeon_crawler_tutorial_tilemap.json"
     );
+
+    this.load.atlas(
+      "spriteatlas",
+      "tiles/tileset_image.png",
+      "tiles/sprites-characters.json"
+    );
+    // knight: y = 16 * 6, x = 16 * 9 => 16 * 16
+    // sprite 64 => 68
   }
 
   create() {

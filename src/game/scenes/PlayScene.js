@@ -3,6 +3,13 @@ import Phaser from "phaser";
 
 const DEBUG = true;
 
+const DIRECTION = {
+  LEFT: 0,
+  UP: 1,
+  RIGHT: 2,
+  DOWN: 3
+};
+
 export default class PlayScene extends Scene {
   constructor() {
     super({ key: "PlayScene" });
@@ -15,12 +22,12 @@ export default class PlayScene extends Scene {
     const tileset = map.addTilesetImage("dungeon", "tiles");
 
     map.createLayer("Ground", tileset);
-    const wallsLayer = map.createLayer("Walls", tileset);
+    this.wallsLayer = map.createLayer("Walls", tileset);
 
-    wallsLayer.setCollisionByProperty({ collides: true });
+    this.wallsLayer.setCollisionByProperty({ collides: true });
 
     // use this.add.sprite to add a non-physics sprite
-    this.knight = this.physics.add.sprite(128, 128, "spriteatlas", "sprite61");
+    this.knight = this.physics.add.sprite(100, 80, "spriteatlas", "sprite61");
     this.knight.body.setSize(
       this.knight.width * 0.9,
       this.knight.height * 0.45
@@ -43,17 +50,108 @@ export default class PlayScene extends Scene {
     });
     this.knight.anims.play("knight-idle");
 
-    this.physics.add.collider([this.knight, wallsLayer]);
+    // Orcs
+    this.orcs = [];
+
+    this.anims.create({
+      key: "orc-idle",
+      frames: [{ key: "spriteatlas", frame: "sprite182" }]
+    });
+    this.anims.create({
+      key: "orc-run",
+      frames: this.anims.generateFrameNames("spriteatlas", {
+        start: 185,
+        end: 189,
+        prefix: "sprite"
+      }),
+      repeat: -1,
+      frameRate: 15
+    });
+
+    this.spawnOrc(160, 128);
+
+    this.physics.add.collider([this.knight, this.wallsLayer]);
 
     this.cameras.main.startFollow(this.knight, true, 0.1, 0.1);
 
+    this.physics.world.on(
+      Phaser.Physics.Arcade.Events.TILE_COLLIDE,
+      this.handleTileCollision,
+      this
+    );
+
     if (DEBUG) {
       const debugGraphics = this.add.graphics().setAlpha(0.7);
-      wallsLayer.renderDebug(debugGraphics, {
+      this.wallsLayer.renderDebug(debugGraphics, {
         tileColor: null,
         collidingTileColor: new Phaser.Display.Color(243, 243, 48, 255),
         faceColor: new Phaser.Display.Color(48, 39, 37, 255)
       });
+    }
+  }
+
+  handleTileCollision(go, tile) {
+    if (!go.name === "orc") return;
+    go.direction += 1;
+    if (go.direction > 3) go.direction = 0;
+    go.elapsed = 0;
+  }
+
+  spawnOrc(x, y) {
+    const orc = this.physics.add.sprite(x, y, "spriteatlas", "sprite182");
+    orc.name = "orc";
+    orc.body.setSize(orc.width * 0.9, orc.height * 0.45);
+    orc.body.offset.y = 16;
+    orc.anims.play("orc-idle");
+    this.physics.add.collider([orc, this.wallsLayer]);
+    this.physics.add.collider([orc, this.knight]);
+    orc.body.onCollide = true;
+
+    this.orcs.push(orc);
+    return orc;
+  }
+
+  updateOrcs(deltaTime) {
+    for (const orc of this.orcs) {
+      const speed = 50;
+      if (orc.direction === undefined) {
+        orc.direction = DIRECTION.UP;
+        orc.elapsed = 0;
+      }
+      orc.elapsed += deltaTime;
+
+      switch (orc.direction) {
+        case DIRECTION.LEFT:
+          orc.setVelocityY(0);
+          orc.setVelocityX(-speed);
+          orc.anims.play("orc-run", true);
+          orc.scaleX = -1;
+          orc.body.offset.x = 16;
+          break;
+        case DIRECTION.RIGHT:
+          orc.setVelocityY(0);
+          orc.setVelocityX(speed);
+          orc.anims.play("orc-run", true);
+          orc.scaleX = 1;
+          orc.body.offset.x = 0;
+          break;
+        case DIRECTION.UP:
+          orc.setVelocityX(0);
+          orc.setVelocityY(-speed);
+          orc.anims.play("orc-run", true);
+          break;
+        case DIRECTION.DOWN:
+          orc.setVelocityX(0);
+          orc.setVelocityY(speed);
+          orc.anims.play("orc-run", true);
+          break;
+      }
+
+      if (orc.elapsed >= 1500) {
+        orc.direction += 1;
+        if (orc.direction > 3) orc.direction = 0;
+        orc.elapsed = 0;
+      }
     }
   }
 
@@ -91,5 +189,7 @@ export default class PlayScene extends Scene {
       this.knight.anims.play("knight-idle");
       this.knight.setVelocity(0, 0);
     }
+
+    this.updateOrcs(deltaTime);
   }
 }

@@ -11,7 +11,7 @@ const DIRECTION = {
   DOWN: 3
 };
 
-const reloadingTime = 4000;
+const reloadingTime = 2000;
 
 export default class PlayScene extends Scene {
   constructor() {
@@ -90,7 +90,10 @@ export default class PlayScene extends Scene {
       frameRate: 15
     });
 
-    this.spawnOrc(160, 128);
+    const orcsLayer = map.getObjectLayer("Enemies");
+    for (const orc of orcsLayer.objects) {
+      this.spawnOrc(orc.x, orc.y);
+    }
 
     // Knives
 

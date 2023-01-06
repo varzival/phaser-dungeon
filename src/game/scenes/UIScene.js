@@ -21,6 +21,8 @@ export default class GameUI extends Phaser.Scene {
       quantity: 3
     });*/
 
+    this.coinAmt = 0;
+
     this.hearts = [
       this.add.sprite(10, 10, "uiatlas", "sprite235"),
       this.add.sprite(28, 10, "uiatlas", "sprite235"),
@@ -28,6 +30,17 @@ export default class GameUI extends Phaser.Scene {
     ];
     this.knife = this.add.sprite(64, 10, "uiatlas", "sprite64");
     this.knife.setSize(this.knife.width * 0.9, this.knife.height * 0.45);
+
+    this.add.sprite(82, 10, "uiatlas", "sprite242");
+
+    this.coinText = this.add
+      .text(90, 10, "x 0", {
+        fontFamily: 'Georgia, "Goudy Bookletter 1911", Times, serif',
+        align: "center",
+        fill: "white",
+        fontSize: 15
+      })
+      .setOrigin(0, 0.5);
 
     for (const heart of this.hearts) {
       heart.setSize(heart.width * 0.9, heart.height * 0.45);
@@ -39,6 +52,7 @@ export default class GameUI extends Phaser.Scene {
       this
     );
     sceneEvents.on("knight-reloading", this.handlePlayerReloading, this);
+    sceneEvents.on("coin-collected", this.handleCoinCollected, this);
 
     this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
       sceneEvents.off("knight-health-changed");
@@ -77,6 +91,11 @@ export default class GameUI extends Phaser.Scene {
 
   update(tt, dt) {
     this.handlePlayerDeath(dt);
+  }
+
+  handleCoinCollected() {
+    this.coinAmt++;
+    this.coinText.setText("x " + this.coinAmt);
   }
 
   handlePlayerReloading(reloadingTime) {

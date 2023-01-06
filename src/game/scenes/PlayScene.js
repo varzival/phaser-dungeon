@@ -122,6 +122,32 @@ export default class PlayScene extends Scene {
       this
     );
 
+    // Coins
+    this.coins = this.physics.add.group({
+      classType: Phaser.Physics.Arcade.Sprite
+    });
+
+    this.anims.create({
+      key: "coin-rotate",
+      frames: this.anims.generateFrameNames("uiatlas", {
+        start: 242,
+        end: 245,
+        prefix: "sprite"
+      }),
+      repeat: -1,
+      frameRate: 15
+    });
+
+    this.physics.add.collider(
+      this.coins,
+      this.knight,
+      this.handlePlayerCoinCollision,
+      undefined,
+      this
+    );
+
+    this.spawnCoin(60, 70);
+
     // UI
     this.health = 3;
     this.dead = false;
@@ -156,6 +182,13 @@ export default class PlayScene extends Scene {
     return orc;
   }
 
+  spawnCoin(x, y) {
+    const coin = this.physics.add.sprite(x, y, "uiatlas", "sprite242");
+    coin.name = "coin";
+    this.coins.add(coin);
+    coin.anims.play("coin-rotate");
+  }
+
   spawnKnife(x, y, direction) {
     if (this.reloading) return;
     // Rotate 90 degrees to right if direction is 1
@@ -178,8 +211,16 @@ export default class PlayScene extends Scene {
   }
 
   handleKnifeOrcCollision(obj1, obj2) {
+    const orc = obj1.name === "orc" ? obj1 : obj2;
+    this.spawnCoin(orc.x, orc.y);
     obj1.destroy();
     obj2.destroy();
+  }
+
+  handlePlayerCoinCollision(obj1, obj2) {
+    const coin = obj1.name === "coin" ? obj1 : obj2;
+    coin.destroy();
+    sceneEvents.emit("coin-collected");
   }
 
   handlePlayerOrcCollision(obj1, obj2) {
@@ -325,7 +366,7 @@ export default class PlayScene extends Scene {
     }
 
     if (this.cursors.space?.isDown) {
-      this.spawnKnife(this.knight.x, this.knight.y, this.knight.scaleX);
+      this.spawnKnife(this.knight.x, this.knight.y + 8, this.knight.scaleX);
     }
 
     if (!running) {

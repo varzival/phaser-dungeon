@@ -26,6 +26,9 @@ export default class GameUI extends Phaser.Scene {
       this.add.sprite(28, 10, "uiatlas", "sprite235"),
       this.add.sprite(46, 10, "uiatlas", "sprite235")
     ];
+    this.knife = this.add.sprite(64, 10, "uiatlas", "sprite64");
+    this.knife.setSize(this.knife.width * 0.9, this.knife.height * 0.45);
+
     for (const heart of this.hearts) {
       heart.setSize(heart.width * 0.9, heart.height * 0.45);
     }
@@ -35,6 +38,7 @@ export default class GameUI extends Phaser.Scene {
       this.handlePlayerHealthChanged,
       this
     );
+    sceneEvents.on("knight-reloading", this.handlePlayerReloading, this);
 
     this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
       sceneEvents.off("knight-health-changed");
@@ -73,6 +77,11 @@ export default class GameUI extends Phaser.Scene {
 
   update(tt, dt) {
     this.handlePlayerDeath(dt);
+  }
+
+  handlePlayerReloading(reloadingTime) {
+    if (reloadingTime === 0) this.knife.setAlpha(1);
+    else this.knife.setAlpha(reloadingTime);
   }
 
   handlePlayerHealthChanged(health) {

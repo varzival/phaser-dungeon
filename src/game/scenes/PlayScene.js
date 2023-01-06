@@ -11,6 +11,8 @@ const DIRECTION = {
   DOWN: 3
 };
 
+const reloadingTime = 4000;
+
 export default class PlayScene extends Scene {
   constructor() {
     super({ key: "PlayScene" });
@@ -57,7 +59,17 @@ export default class PlayScene extends Scene {
     this.knight.anims.play("knight-idle");
 
     // Orcs
-    this.orcs = [];
+    this.orcs = this.physics.add.group({
+      classType: Phaser.Physics.Arcade.Sprite
+    });
+    this.physics.add.collider(this.orcs, this.wallsLayer);
+    this.physics.add.collider(
+      this.orcs,
+      this.knight,
+      this.handlePlayerOrcCollision,
+      undefined,
+      this
+    );
 
     this.anims.create({
       key: "orc-idle",
@@ -80,6 +92,26 @@ export default class PlayScene extends Scene {
 
     this.spawnOrc(160, 128);
 
+    // Knives
+
+    this.knives = this.physics.add.group({
+      classType: Phaser.Physics.Arcade.Sprite
+    });
+    this.physics.add.collider(
+      this.knives,
+      this.wallsLayer,
+      this.handleKnifeWallCollision,
+      undefined,
+      this
+    );
+    this.physics.add.collider(
+      this.knives,
+      this.orcs,
+      this.handleKnifeOrcCollision,
+      undefined,
+      this
+    );
+
     this.physics.add.collider([this.knight, this.wallsLayer]);
 
     this.cameras.main.startFollow(this.knight, true, 0.1, 0.1);
@@ -94,6 +126,7 @@ export default class PlayScene extends Scene {
     this.health = 3;
     this.dead = false;
     this.gameRunning = true;
+    this.reloading = 0;
 
     if (DEBUG) {
       const debugGraphics = this.add.graphics().setAlpha(0.7);
@@ -118,18 +151,35 @@ export default class PlayScene extends Scene {
     orc.body.setSize(orc.width * 0.9, orc.height * 0.45);
     orc.body.offset.y = 16;
     orc.anims.play("orc-idle");
-    this.physics.add.collider([orc, this.wallsLayer]);
-    this.physics.add.collider(
-      orc,
-      this.knight,
-      this.handlePlayerOrcCollision,
-      undefined,
-      this
-    );
+    this.orcs.add(orc);
     orc.body.onCollide = true;
-
-    this.orcs.push(orc);
     return orc;
+  }
+
+  spawnKnife(x, y, direction) {
+    if (this.reloading) return;
+    // Rotate 90 degrees to right if direction is 1
+    // Rotate 90 degrees to left if direction is -1
+    const rotationVector = new Phaser.Math.Vector2(0, direction);
+    const knife = this.physics.add.sprite(x, y, "uiatlas", "sprite64");
+    knife.setRotation(rotationVector.angle());
+    knife.name = "knife";
+    knife.body.setSize(knife.width * 0.9, knife.height * 0.45);
+    knife.direction = direction;
+    this.knives.add(knife);
+    knife.body.onCollide = true;
+    this.reloading = 1;
+    return knife;
+  }
+
+  handleKnifeWallCollision(obj1, obj2) {
+    const knife = obj1.name === "knife" ? obj1 : obj2;
+    knife.destroy();
+  }
+
+  handleKnifeOrcCollision(obj1, obj2) {
+    obj1.destroy();
+    obj2.destroy();
   }
 
   handlePlayerOrcCollision(obj1, obj2) {
@@ -140,7 +190,7 @@ export default class PlayScene extends Scene {
     orc.hit = 1;
     orc.anims.play("orc-hit");
 
-    const dir = new Phaser.Math.Vector2(dx, dy).normalize().scale(-50);
+    const dir = new Phaser.Math.Vector2(dx, dy).normalize().scale(50);
 
     this.knight.setVelocity(dir.x, dir.y);
     this.knight.hit = 1;
@@ -154,7 +204,7 @@ export default class PlayScene extends Scene {
 
   updateOrcs(deltaTime) {
     if (!this.gameRunning || this.dead) return;
-    for (const orc of this.orcs) {
+    for (const orc of this.orcs.getChildren()) {
       if (orc.hit && orc.hit > 0) {
         orc.hit += deltaTime;
         orc.anims.play("orc-hit");
@@ -209,7 +259,7 @@ export default class PlayScene extends Scene {
   update(totalTime, deltaTime) {
     if (!this.gameRunning) {
       this.knight.setVelocity(0, 0);
-      for (const orc of this.orcs) {
+      for (const orc of this.orcs.getChildren()) {
         orc.setVelocity(0, 0);
       }
       return;
@@ -218,7 +268,19 @@ export default class PlayScene extends Scene {
 
     const speed = 100;
 
+    for (const knife of this.knives.getChildren()) {
+      knife.setVelocity(knife.direction * speed, 0);
+    }
+
     this.updateOrcs(deltaTime);
+
+    if (this.reloading) {
+      this.reloading += deltaTime;
+      if (this.reloading >= reloadingTime) {
+        this.reloading = 0;
+      }
+      sceneEvents.emit("knight-reloading", this.reloading / reloadingTime);
+    }
 
     if (this.knight.hit && this.knight.hit > 0) {
       this.knight.hit += deltaTime;
@@ -260,6 +322,10 @@ export default class PlayScene extends Scene {
       this.knight.anims.play("knight-run", true);
       this.knight.setVelocityY(speed);
       running = true;
+    }
+
+    if (this.cursors.space?.isDown) {
+      this.spawnKnife(this.knight.x, this.knight.y, this.knight.scaleX);
     }
 
     if (!running) {

@@ -1,7 +1,7 @@
 import { Scene } from "phaser";
 import Phaser from "phaser";
 
-const DEBUG = true;
+const DEBUG = false;
 
 const DIRECTION = {
   LEFT: 0,
@@ -39,6 +39,10 @@ export default class PlayScene extends Scene {
       frames: [{ key: "spriteatlas", frame: "sprite61" }]
     });
     this.anims.create({
+      key: "knight-hit",
+      frames: [{ key: "spriteatlas", frame: "sprite69" }]
+    });
+    this.anims.create({
       key: "knight-run",
       frames: this.anims.generateFrameNames("spriteatlas", {
         start: 64,
@@ -56,6 +60,10 @@ export default class PlayScene extends Scene {
     this.anims.create({
       key: "orc-idle",
       frames: [{ key: "spriteatlas", frame: "sprite182" }]
+    });
+    this.anims.create({
+      key: "orc-hit",
+      frames: [{ key: "spriteatlas", frame: "sprite187" }]
     });
     this.anims.create({
       key: "orc-run",
@@ -104,15 +112,44 @@ export default class PlayScene extends Scene {
     orc.body.offset.y = 16;
     orc.anims.play("orc-idle");
     this.physics.add.collider([orc, this.wallsLayer]);
-    this.physics.add.collider([orc, this.knight]);
+    this.physics.add.collider(
+      orc,
+      this.knight,
+      this.handlePlayerOrcCollision,
+      undefined,
+      this
+    );
     orc.body.onCollide = true;
 
     this.orcs.push(orc);
     return orc;
   }
 
+  handlePlayerOrcCollision(obj1, obj2) {
+    const dx = obj1.x - obj2.x;
+    const dy = obj1.y - obj2.y;
+
+    const orc = obj1.name === "orc" ? obj1 : obj2;
+    orc.hit = 1;
+    orc.anims.play("orc-hit");
+
+    const dir = new Phaser.Math.Vector2(dx, dy).normalize().scale(-50);
+
+    this.knight.setVelocity(dir.x, dir.y);
+    this.knight.hit = 1;
+  }
+
   updateOrcs(deltaTime) {
     for (const orc of this.orcs) {
+      if (orc.hit && orc.hit > 0) {
+        orc.hit += deltaTime;
+        orc.anims.play("orc-hit");
+        if (orc.hit > 500) {
+          orc.hit = 0;
+        }
+        continue;
+      }
+
       const speed = 50;
       if (orc.direction === undefined) {
         orc.direction = DIRECTION.UP;
@@ -160,6 +197,17 @@ export default class PlayScene extends Scene {
 
     const speed = 100;
 
+    this.updateOrcs(deltaTime);
+
+    if (this.knight.hit && this.knight.hit > 0) {
+      this.knight.hit += deltaTime;
+      this.knight.anims.play("knight-hit");
+      if (this.knight.hit > 500) {
+        this.knight.hit = 0;
+      }
+      return;
+    }
+
     let running = false;
     if (this.cursors.left?.isDown) {
       this.knight.anims.play("knight-run", true);
@@ -189,7 +237,5 @@ export default class PlayScene extends Scene {
       this.knight.anims.play("knight-idle");
       this.knight.setVelocity(0, 0);
     }
-
-    this.updateOrcs(deltaTime);
   }
 }

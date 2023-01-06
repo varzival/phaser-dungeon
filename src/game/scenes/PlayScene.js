@@ -1,5 +1,6 @@
 import { Scene } from "phaser";
 import Phaser from "phaser";
+import sceneEvents from "@/events";
 
 const DEBUG = false;
 
@@ -16,6 +17,7 @@ export default class PlayScene extends Scene {
   }
 
   create() {
+    this.scene.run("UIScene");
     this.cursors = this.input.keyboard.createCursorKeys();
 
     const map = this.make.tilemap({ key: "dungeon" });
@@ -88,6 +90,11 @@ export default class PlayScene extends Scene {
       this
     );
 
+    // UI
+    this.health = 3;
+    this.dead = false;
+    this.gameRunning = true;
+
     if (DEBUG) {
       const debugGraphics = this.add.graphics().setAlpha(0.7);
       this.wallsLayer.renderDebug(debugGraphics, {
@@ -137,9 +144,16 @@ export default class PlayScene extends Scene {
 
     this.knight.setVelocity(dir.x, dir.y);
     this.knight.hit = 1;
+
+    sceneEvents.emit("knight-health-changed", --this.health);
+
+    if (this.health <= 0) {
+      this.dead = true;
+    }
   }
 
   updateOrcs(deltaTime) {
+    if (!this.gameRunning || this.dead) return;
     for (const orc of this.orcs) {
       if (orc.hit && orc.hit > 0) {
         orc.hit += deltaTime;
@@ -193,6 +207,13 @@ export default class PlayScene extends Scene {
   }
 
   update(totalTime, deltaTime) {
+    if (!this.gameRunning) {
+      this.knight.setVelocity(0, 0);
+      for (const orc of this.orcs) {
+        orc.setVelocity(0, 0);
+      }
+      return;
+    }
     if (!this.cursors || !this.knight) return;
 
     const speed = 100;
@@ -204,11 +225,19 @@ export default class PlayScene extends Scene {
       this.knight.anims.play("knight-hit");
       if (this.knight.hit > 500) {
         this.knight.hit = 0;
+        if (this.dead) {
+          this.gameRunning = false;
+        }
       }
+
       return;
     }
 
     let running = false;
+    if (this.dead) {
+      this.knight.setVelocity(0, 0);
+      return;
+    }
     if (this.cursors.left?.isDown) {
       this.knight.anims.play("knight-run", true);
       this.knight.setVelocityX(-speed);

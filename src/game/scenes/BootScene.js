@@ -25,6 +25,11 @@ export default class BootScene extends Scene {
       "tiles/tileset_image.png",
       "tiles/sprites-characters.json"
     );
+    this.load.atlas(
+      "uiatlas",
+      "tiles/tileset_image.png",
+      "tiles/sprites-ui.json"
+    );
     // knight: y = 16 * 6, x = 16 * 9 => 16 * 16
     // sprite 64 => 68
   }

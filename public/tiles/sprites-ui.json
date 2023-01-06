@@ -1,0 +1,60 @@
+{
+  "frames": {
+    "sprite235": {
+      "frame": { "x": 289, "y": 258, "w": 13, "h": 12 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 13, "h": 12 },
+      "sourceSize": { "w": 13, "h": 12 }
+    },
+    "sprite236": {
+      "frame": { "x": 305, "y": 258, "w": 13, "h": 12 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 13, "h": 12 },
+      "sourceSize": { "w": 13, "h": 12 }
+    },
+    "sprite237": {
+      "frame": { "x": 321, "y": 258, "w": 13, "h": 12 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 13, "h": 12 },
+      "sourceSize": { "w": 13, "h": 12 }
+    },
+    "sprite242": {
+      "frame": { "x": 289, "y": 273, "w": 6, "h": 7 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 6, "h": 7 },
+      "sourceSize": { "w": 6, "h": 7 }
+    },
+    "sprite243": {
+      "frame": { "x": 298, "y": 273, "w": 4, "h": 7 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 4, "h": 7 },
+      "sourceSize": { "w": 4, "h": 7 }
+    },
+    "sprite244": {
+      "frame": { "x": 307, "y": 273, "w": 2, "h": 7 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 2, "h": 7 },
+      "sourceSize": { "w": 2, "h": 7 }
+    },
+    "sprite245": {
+      "frame": { "x": 314, "y": 273, "w": 4, "h": 7 },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": { "x": 0, "y": 0, "w": 4, "h": 7 },
+      "sourceSize": { "w": 4, "h": 7 }
+    }
+  },
+  "meta": {
+    "app": "https://www.leshylabs.com/apps/sstool/",
+    "version": "Leshy SpriteSheet Tool v0.8.4",
+    "image": "spritesheet.png",
+    "size": { "w": 512, "h": 512 },
+    "scale": 1
+  }
+}

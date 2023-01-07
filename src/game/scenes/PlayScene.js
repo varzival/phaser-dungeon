@@ -1,6 +1,7 @@
 import { Scene } from "phaser";
 import Phaser from "phaser";
 import sceneEvents from "@/events";
+import SOUND from "./sounds";
 
 const DEBUG = false;
 
@@ -28,7 +29,7 @@ export default class PlayScene extends Scene {
     map.createLayer("Ground", tileset);
     this.wallsLayer = map.createLayer("Walls", tileset);
 
-    this.wallsLayer.setCollisionByProperty({ collides: true });
+    this.wallsLayer.setCollisionByProperty({ collides: true }).setDepth(1);
 
     // use this.add.sprite to add a non-physics sprite
     this.knight = this.physics.add.sprite(100, 80, "spriteatlas", "sprite61");
@@ -157,6 +158,19 @@ export default class PlayScene extends Scene {
     this.gameRunning = true;
     this.reloading = 0;
 
+    this.music = this.sound.add(SOUND.MUSIC);
+    this.music.loop = true;
+    this.music.play();
+    this.music.setMute(localStorage.getItem("muted") === "true");
+
+    sceneEvents.on(
+      "muted",
+      (muted) => {
+        this.music.setMute(muted);
+      },
+      this
+    );
+
     if (DEBUG) {
       const debugGraphics = this.add.graphics().setAlpha(0.7);
       this.wallsLayer.renderDebug(debugGraphics, {
@@ -205,6 +219,7 @@ export default class PlayScene extends Scene {
     this.knives.add(knife);
     knife.body.onCollide = true;
     this.reloading = 1;
+    this.playSound(SOUND.KNIFE);
     return knife;
   }
 
@@ -218,12 +233,14 @@ export default class PlayScene extends Scene {
     this.spawnCoin(orc.x, orc.y);
     obj1.destroy();
     obj2.destroy();
+    this.playSound(SOUND.ORC_DEAD);
   }
 
   handlePlayerCoinCollision(obj1, obj2) {
     const coin = obj1.name === "coin" ? obj1 : obj2;
     coin.destroy();
     sceneEvents.emit("coin-collected");
+    this.playSound(SOUND.COIN);
   }
 
   handlePlayerOrcCollision(obj1, obj2) {
@@ -243,6 +260,8 @@ export default class PlayScene extends Scene {
 
     if (this.health <= 0) {
       this.dead = true;
+    } else {
+      this.playSound(SOUND.ORC_HIT);
     }
   }
 
@@ -300,6 +319,12 @@ export default class PlayScene extends Scene {
     }
   }
 
+  playSound(sound) {
+    if (!this.music.mute) {
+      this.sound.add(sound).play();
+    }
+  }
+
   update(totalTime, deltaTime) {
     if (!this.gameRunning) {
       this.knight.setVelocity(0, 0);
@@ -320,8 +345,16 @@ export default class PlayScene extends Scene {
 
     if (this.reloading) {
       this.reloading += deltaTime;
+      if (
+        reloadingTime - this.reloading < 1000 &&
+        !this.reloading_sound_played
+      ) {
+        this.reloading_sound_played = true;
+        this.playSound(SOUND.KNIFE_SHARPEN);
+      }
       if (this.reloading >= reloadingTime) {
         this.reloading = 0;
+        this.reloading_sound_played = false;
       }
       sceneEvents.emit("knight-reloading", this.reloading / reloadingTime);
     }
@@ -333,6 +366,13 @@ export default class PlayScene extends Scene {
         this.knight.hit = 0;
         if (this.dead) {
           this.gameRunning = false;
+          this.playSound(SOUND.HIT);
+          if (!this.music.mute) {
+            setTimeout(() => {
+              this.sound.add(SOUND.MUSIC_DEFEAT).play();
+            }, 3000);
+          }
+          this.music.setMute(true);
         }
       }
 

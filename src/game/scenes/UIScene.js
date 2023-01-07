@@ -42,6 +42,13 @@ export default class GameUI extends Phaser.Scene {
       })
       .setOrigin(0, 0.5);
 
+    const muted = localStorage.getItem("muted") === "true" ? true : false;
+    this.muteButton = this.add
+      .image(390, 10, muted ? "unmute" : "mute")
+      .setScale(0.25, 0.25)
+      .setInteractive({ useHandCursor: true })
+      .on("pointerdown", () => this.handleMute());
+
     for (const heart of this.hearts) {
       heart.setSize(heart.width * 0.9, heart.height * 0.45);
     }
@@ -57,6 +64,10 @@ export default class GameUI extends Phaser.Scene {
     this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
       sceneEvents.off("knight-health-changed");
     });
+
+    // window.addEventListener("storage", (event) => {
+    //   console.log(event);
+    // });
 
     this.blackOverlay = this.add
       .rectangle(0, 0, 1000, 1000, "black", 1)
@@ -91,6 +102,13 @@ export default class GameUI extends Phaser.Scene {
 
   update(tt, dt) {
     this.handlePlayerDeath(dt);
+  }
+
+  handleMute() {
+    const muted = localStorage.getItem("muted") === "true" ? true : false;
+    localStorage.setItem("muted", !muted);
+    this.muteButton.setTexture(muted ? "mute" : "unmute");
+    sceneEvents.emit("muted", !muted);
   }
 
   handleCoinCollected() {

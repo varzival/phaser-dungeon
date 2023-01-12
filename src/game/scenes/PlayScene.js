@@ -119,6 +119,14 @@ export default class PlayScene extends Scene {
     this.physics.add.collider([this.knight, this.wallsLayer]);
 
     this.cameras.main.startFollow(this.knight, true, 0.1, 0.1);
+    this.light = this.add.graphics();
+    //this.light.fillStyle(0xffffff, 0.5);
+    //this.light.setBlendMode(Phaser.BlendModes.ADD);
+    this.light.fillCircle(this.knight.x + 100, this.knight.y + 50, 80);
+    this.cameras.main.setMask(
+      //new Phaser.Display.Masks.BitmapMask(this, this.light)
+      new Phaser.Display.Masks.GeometryMask(this, this.light)
+    );
 
     this.physics.world.on(
       Phaser.Physics.Arcade.Events.TILE_COLLIDE,
@@ -267,6 +275,10 @@ export default class PlayScene extends Scene {
 
   updateOrcs(deltaTime) {
     if (!this.gameRunning || this.dead) return;
+
+    //this.light.x = this.knight.x;
+    //this.light.y = this.knight.y;
+
     for (const orc of this.orcs.getChildren()) {
       if (orc.hit && orc.hit > 0) {
         orc.hit += deltaTime;
